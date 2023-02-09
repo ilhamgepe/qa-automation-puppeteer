@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import sendErrorMessage from "../sendMessage";
+import { success } from "../step/logs";
 
 interface body {
   title: string;
@@ -34,7 +35,7 @@ export default async function createPL(
     )
     .then((res) => {
       if (res.status == 200) {
-        console.log("berhasil create paymentlink");
+        success("berhasil create paymentlink");
       }
     })
     .catch(async (e: AxiosError) => {
