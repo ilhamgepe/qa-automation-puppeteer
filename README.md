@@ -18,7 +18,7 @@ automation test purwantara dengan [puppeteer](https://pptr.dev/) & [whatsapp-web
 
 
 
-jika tidak setelah scan ada error ``Error: Evaluation failed: TypeError: Cannot read properties of undefined (reading 'queryExists')``
+jika setelah scan ada error ``Error: Evaluation failed: TypeError: Cannot read properties of undefined (reading 'queryExists')``
 pergi ke node_modules\whatsapp-web.js\src\util\Injected.js
 search ``window.Store.QueryExist``
 original = ``window.Store.QueryExist = window.mR.findModule('queryExists')[0].queryExists;``
