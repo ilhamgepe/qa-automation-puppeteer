@@ -6,11 +6,15 @@ import { success } from "../utils/step/logs";
 import { delay } from "../utils/times/time";
 import { urlCheck } from "../utils/urlCheck/urlCheck";
 
-const currentTime: string = moment().format("YYYY-MM-DD HH:mm");
-const expires_at: string = moment().add(3, "hour").format("YYYY-MM-DD HH:mm");
+const getCurrentTime = () => moment().format("YYYY-MM-DD HH:mm");
+const getExpirationTime = () => moment().add(3, "hour").format("YYYY-MM-DD HH:mm");
+
 export default async function paymentlink(page: Page) {
-  // click paymentlink
-  await clickByHref(page, "https://purwantara.id/payment-links");
+  const paymentLinkUrl = "https://purwantara.id/payment-links";
+  const createPaymentLinkUrl = "https://purwantara.id/payment-links/create";
+  const paymentLinkTitle = `automation ${getCurrentTime()}`;
+
+  await clickByHref(page, paymentLinkUrl);
   await delay(1000);
   await page.screenshot({
     path: `./screenshot/4listOfPaymentLinks.jpeg`,
@@ -18,41 +22,30 @@ export default async function paymentlink(page: Page) {
   });
   success("berhasil membuka list paymentlink");
 
-  // click button create
-  await clickByHref(page, "https://purwantara.id/payment-links/create");
+  await clickByHref(page, createPaymentLinkUrl);
   await delay(500);
-  urlCheck(
-    page,
-    "https://purwantara.id/payment-links/create",
-    "at click button create paymentlink"
-  );
+  urlCheck(page, createPaymentLinkUrl, "at click button create paymentlink");
   success("berhasil membuka create paymentlink");
 
-  // ambil token csrf
   const tokenCSRF: string = await page.$eval("input[name=_token]", (el: any) =>
     el.getAttribute("value")
   );
   success("berhasil ambil token csrf");
 
-  // ambil cookies
-  const getCookie = await page.cookies();
-  const [secureCookies, xsrf] = getCookie.map((cookie) => {
-    return cookie.value;
-  });
+  const cookies = await page.cookies();
+  const [secureCookies, xsrf] = cookies.map((cookie) => cookie.value);
   success("berhasil ambil cookies");
 
-  //   ambil url post paymentlink
-  const urlPostPL: string | null = await page.$eval(
-    "#main-container > div > form",
-    (el) => el.getAttribute("action")
+  const urlPostPL: string | null = await page.$eval("#main-container > div > form", (el) =>
+    el.getAttribute("action")
   );
   success("berhasil ambil url post data paymentlink");
 
   const body = {
-    title: `automation ${currentTime ?? currentTime}`,
+    title: paymentLinkTitle,
     amount: 10000,
-    expires_at: expires_at,
-    description: `automation ${currentTime ?? currentTime}`,
+    expires_at: getExpirationTime(),
+    description: paymentLinkTitle,
     _token: tokenCSRF,
   };
   const header = {

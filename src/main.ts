@@ -1,67 +1,77 @@
 import colors from "colors";
-colors.enable();
-import * as dotEnv from "dotenv";
+import dotenv from "dotenv";
 import puppeteer from "puppeteer";
-import paymentlink from "./testCase/createPaymentlink";
+import createPaymentLink from "./testCase/createPaymentlink";
 import login from "./testCase/login";
 import createChannel from "./utils/createChannel/createChannel";
 import sendErrorMessage from "./utils/sendMessage";
 import { success } from "./utils/step/logs";
 import { delay } from "./utils/times/time";
-dotEnv.config();
 
-export const errors: any[] = [];
+dotenv.config();
 
-(async () => {
-  const browser = await puppeteer.launch({
-    headless: false,
-    executablePath:
-      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    defaultViewport: null,
-    args: ["--start-maximized"],
-    timeout: 10000,
-  });
-  console.log("berhasil membuat browser".green);
+const errorMessages: any[] = [];
 
-  const page = await browser.newPage();
-  await page.setViewport({ width: 0, height: 0 });
+async function main() {
+  try {
+    const browser = await puppeteer.launch({
+      headless: false,
+      executablePath:
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      defaultViewport: null,
+      args: ["--start-maximized"],
+      timeout: 10000,
+    });
 
-  await page.goto(process.env.url!);
-  await delay(1000);
-  await page.screenshot({
-    path: `./screenshot/1landingPage.jpeg`,
-    type: "jpeg",
-  });
-  success("berhasil membuka url");
+    console.log("Browser successfully launched".green);
 
-  // #login case
-  await login(page);
-  success("berhasil login");
+    const page = await browser.newPage();
+    await page.setViewport({ width: 0, height: 0 });
 
-  // #paymentlink case
-  await paymentlink(page);
-  await delay(1000);
-  // #create channel
-  const urlOpenPL: string | null = await page.$eval(
-    "#main-container>div>div>div:nth-child(1)>div>div>ul>li:nth-child(1)>div>div.col-6.text-right>a",
-    (el) => el.getAttribute("href")
-  );
+    await page.goto(process.env.url!);
+    await delay(1000);
+    await page.screenshot({
+      path: `./screenshot/1landingPage.jpeg`,
+      type: "jpeg",
+    });
+    success("URL successfully opened");
 
-  await delay(1000);
-  // create new page for create channel
-  const page2 = await browser.newPage();
-  await page2.setViewport({ width: 0, height: 0 });
-  await page2.goto(urlOpenPL!);
-  await createChannel(page2, browser);
+    // Login
+    await login(page);
+    success("Login successful");
 
-  await delay(1000);
-  success("test selesai dengan " + errors.length + "errors");
-  const newError = errors.join("\n\n");
+    // Create payment link
+    await createPaymentLink(page);
+    await delay(1000);
 
-  await sendErrorMessage(
-    newError + "\n\n\n" + `test selesai dengan ${errors.length} errors`,
-    true
-  );
-  await delay(1000);
-  await browser.close();
-})();
+    // Create channel
+    const urlOpenPL: string | null = await page.$eval(
+      "#main-container>div>div>div:nth-child(1)>div>div>ul>li:nth-child(1)>div>div.col-6.text-right>a",
+      (el) => el.getAttribute("href")
+    );
+
+    await delay(1000);
+
+    const page2 = await browser.newPage();
+    await page2.setViewport({ width: 0, height: 0 });
+    await page2.goto(urlOpenPL!);
+    await createChannel(page2, browser);
+
+    await delay(1000);
+    success("Test finished with " + errorMessages.length + " errors");
+
+    const errorMessage = errorMessages.join("\n\n");
+
+    await sendErrorMessage(
+      errorMessage + "\n\n\n" + `Test finished with ${errorMessages.length} errors`,
+      true
+    );
+    await delay(1000);
+    await browser.close();
+  } catch (error) {
+    console.log(error);
+    errorMessages.push(error.message);
+  }
+}
+
+main();
